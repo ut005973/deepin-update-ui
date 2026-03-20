@@ -206,6 +206,8 @@ void UpdateWorker::initConnect()
             // m_model->setUpdateHistoryEnabled(DConfigWatcher::instance()->getValue(DConfigWatcher::update, configName).toBool());
         } else if (configName == "p2pUpdateEnabled") {
             // m_model->setP2PUpdateEnabled(DConfigWatcher::instance()->getValue(DConfigWatcher::update, configName).toBool());
+        } else if (configName == "isPrivateUpdate") {
+             m_model->setIsPrivateUpdate(DConfigWatcher::instance()->getValue(DConfigWatcher::update, configName).toString() == "True");
         }
     });
 }
@@ -221,6 +223,7 @@ void UpdateWorker::activate()
     refreshLastTimeAndCheckCircle();
     initTestingChannel();
 
+    m_model->setIsPrivateUpdate(DConfigWatcher::instance()->getValue(DConfigWatcher::update, "isPrivateUpdate").toString() == "True");
     m_model->setUpdateMode(m_updateInter->updateMode());
     m_model->setCheckUpdateMode(m_updateInter->checkUpdateMode());
     m_model->setSecurityUpdateEnabled(DConfigWatcher::instance()->getValue(DConfigWatcher::update, "updateSafety").toString() != "Hidden");
@@ -492,6 +495,12 @@ void UpdateWorker::doCheckUpdates()
         }
         watcher->deleteLater();
     });
+}
+
+void UpdateWorker::reCheckWithUi()
+{
+    m_model->setShowCheckUpdate(true);
+    doCheckUpdates();
 }
 
 void UpdateWorker::setCheckUpdatesJob(const QString& jobPath)
@@ -785,6 +794,12 @@ void UpdateWorker::modalUpgrade(bool rebootAfterUpgrade)
     } else {
         m_updateInter->UpdateAndShutdown();
     }
+}
+
+void UpdateWorker::setShutdownAndUpgrade(bool isShutdownUpdate)
+{
+    qCInfo(logDccUpdatePlugin) << "request shutdown upgrade, upgrade after shutdown:" << isShutdownUpdate;
+    m_updateInter->SetShutdownForceUpdate(isShutdownUpdate);
 }
 
 void UpdateWorker::setBackupJob(const QString& jobPath)
